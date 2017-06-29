@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'dart:async';
+import 'dart:io' as io;
 
 import 'package:meta/meta.dart';
 
@@ -11,9 +12,11 @@ import 'base/file_system.dart';
 import 'base/logger.dart';
 import 'base/utils.dart';
 import 'build_info.dart';
+import 'dart/package_map.dart';
 import 'dart/dependencies.dart';
 import 'devfs.dart';
 import 'device.dart';
+import 'flx.dart' as flx;
 import 'globals.dart';
 import 'resident_runner.dart';
 import 'usage.dart';
@@ -61,7 +64,7 @@ class HotRunner extends ResidentRunner {
   bool _runningFromSnapshot = true;
   String kernelFilePath;
 
-  bool _refreshDartDependencies() {
+  bool _refreshDartDependencies() async {
     if (!hotRunnerConfig.computeDartDependencies) {
       // Disabled.
       return true;
@@ -81,6 +84,22 @@ class HotRunner extends ResidentRunner {
       );
       return false;
     }
+    final int result = await flx.createDependencies(
+        mainPath: flx.defaultMainPath,
+        depfilePath: flx.defaultDepfilePath,
+        packages: fs.path.absolute(PackageMap.globalPackagesPath));
+    if (result != 0) {
+      printError('Unable to generate dependencies for your application.\n');
+      return false;
+    }
+    var depfile = new io.File(flx.defaultDepfilePath);
+    await depfile.readAsString().then((String contents) {
+      contents.split(" ").forEach((String path) {
+        if (path.endsWith(".dart")) {
+          _dartDependencies.add(path);
+        }
+      });
+    });
     return true;
   }
 
@@ -174,7 +193,8 @@ class HotRunner extends ResidentRunner {
     }
 
     // Determine the Dart dependencies eagerly.
-    if (!_refreshDartDependencies()) {
+    var _refresh = await _refreshDartDependencies();
+    if (!_refresh) {
       // Some kind of source level error or missing file in the Dart code.
       return 1;
     }
@@ -224,7 +244,8 @@ class HotRunner extends ResidentRunner {
   }
 
   Future<bool> _updateDevFS({ DevFSProgressReporter progressReporter }) async {
-    if (!_refreshDartDependencies()) {
+    var _refresh = await _refreshDartDependencies();
+    if (!_refresh) {
       // Did not update DevFS because of a Dart source error.
       return false;
     }

@@ -58,6 +58,32 @@ Future<int> createSnapshot({
   return runCommandAndStreamOutput(args);
 }
 
+Future<int> createDependencies({
+  @required String mainPath,
+  @required String depfilePath,
+  @required String packages
+}) {
+  assert(mainPath != null);
+  assert(depfilePath != null);
+  assert(packages != null);
+  final String snapshotterPath = artifacts.getArtifactPath(Artifact.genSnapshot, null, BuildMode.debug);
+  final String vmSnapshotData = artifacts.getArtifactPath(Artifact.vmSnapshotData);
+  final String isolateSnapshotData = artifacts.getArtifactPath(Artifact.isolateSnapshotData);
+
+  final List<String> args = <String>[
+    snapshotterPath,
+    '--snapshot_kind=script',
+    '--vm_snapshot_data=$vmSnapshotData',
+    '--isolate_snapshot_data=$isolateSnapshotData',
+    '--packages=$packages',
+    '--script_snapshot=unused_snapshot_file_option',
+    '--dependencies_only',
+    '--dependencies=$depfilePath',
+    '$mainPath',
+  ];
+  return runCommandAndStreamOutput(args);
+}
+
 Future<Null> build({
   String mainPath: defaultMainPath,
   String manifestPath: defaultManifestPath,
