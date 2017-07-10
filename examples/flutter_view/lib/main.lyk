@@ -1,25 +1,25 @@
-import 'dart:async';
+dart {
+  import 'dart:async';
   import 'package:flutter/material.dart';
   import 'package:flutter/services.dart';
 
   void main() {
     runApp(new FlutterView());
   }
+}
 
-class FlutterView extends StatelessWidget {
-@override
-Widget build(BuildContext context) {
-return new MaterialApp(
-title: 'Flutter View',
-theme: new ThemeData(
-primarySwatch: Colors.grey,
-),
-home: new MyHomePage(
-),
-);
+def FlutterView {
+  MaterialApp {
+    title: 'Flutter View',
+    theme: ThemeData {
+      primarySwatch: Colors.grey,
+    },
+    home: MyHomePage {}
+  }
 }
-}
-class MyHomePage extends StatefulWidget {
+
+dart {
+  class MyHomePage extends StatefulWidget {
     @override
     _MyHomePageState createState() => new _MyHomePageState();
   }
@@ -81,4 +81,4 @@ class MyHomePage extends StatefulWidget {
       );
     }
   }
-
+}
